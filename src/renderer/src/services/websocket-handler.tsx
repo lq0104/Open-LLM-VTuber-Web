@@ -148,6 +148,13 @@ function WebSocketHandler({ children }: { children: React.ReactNode }) {
           bgUrlContext?.setBackgroundFiles(message.files);
         }
         break;
+      case 'switch-background':
+        if (message.background_name) {
+          const bgUrl = `${baseUrl}/bg/${message.background_name}`;
+          bgUrlContext?.setBackgroundUrl(bgUrl);
+          // setSubtitleText(`Background changed to ${message.background_name}`);
+        }
+        break;
       case 'audio':
         if (aiState === 'interrupted' || aiState === 'listening') {
           console.log('Audio playback intercepted. Sentence:', message.display_text?.text);

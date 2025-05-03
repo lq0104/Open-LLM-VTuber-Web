@@ -63,6 +63,7 @@ export interface MessageEvent {
   client_uid?: string;
   forwarded?: boolean;
   display_text?: DisplayText;
+  background_name?: string;
 }
 
 class WebSocketService {
