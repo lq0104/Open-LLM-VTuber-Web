@@ -26,10 +26,16 @@ import { ScreenCaptureProvider } from './context/screen-capture-context';
 import { GroupProvider } from './context/group-context';
 // eslint-disable-next-line import/no-extraneous-dependencies, import/newline-after-import
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { wsService } from './services/websocket-service';
+import { sidebarStyles } from './components/sidebar/sidebar-styles';
+
 function App(): JSX.Element {
   const [showSidebar, setShowSidebar] = useState(true);
+  const [showRightPanel, setShowRightPanel] = useState(true);
   const [isFooterCollapsed, setIsFooterCollapsed] = useState(false);
   const [mode, setMode] = useState('window');
+  const [languageHelpList, setLanguageHelpList] = useState<any[]>([]);
   const isElectron = window.api !== undefined;
   useEffect(() => {
     if (isElectron) {
@@ -65,6 +71,17 @@ function App(): JSX.Element {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    // 通过wsService.onMessage订阅消息
+    const sub = wsService.onMessage((msg: any) => {
+      if (msg && msg.language_help) {
+        setLanguageHelpList(prev => [...prev, msg.language_help]);
+        setShowRightPanel(true);
+      }
+    });
+    return () => sub.unsubscribe();
   }, []);
 
   return (
@@ -113,6 +130,71 @@ function App(): JSX.Element {
                                             )}
                                           />
                                         </Box>
+                                      </Box>
+                                      <Box
+                                        position="relative"
+                                        width={showRightPanel ? { base: '100%', md: '440px' } : '24px'}
+                                        height={{ base: 'auto', md: '100%' }}
+                                        bg="gray.800"
+                                        borderLeft="1px solid"
+                                        borderColor="whiteAlpha.200"
+                                        overflow="hidden"
+                                        flexShrink={0}
+                                        transition="all 0.2s"
+                                        display="flex"
+                                        flexDirection="column"
+                                      >
+                                        <Box
+                                          position="absolute"
+                                          left={0}
+                                          top={0}
+                                          width="24px"
+                                          height="100%"
+                                          display="flex"
+                                          alignItems="center"
+                                          justifyContent="center"
+                                          cursor="pointer"
+                                          color="whiteAlpha.700"
+                                          _hover={{ color: 'white' }}
+                                          bg="transparent"
+                                          transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                                          zIndex={1}
+                                          onClick={() => setShowRightPanel(!showRightPanel)}
+                                        >
+                                          {showRightPanel ? <FiChevronRight size={20} /> : <FiChevronLeft size={20} />}
+                                        </Box>
+                                        {showRightPanel && (
+                                          <Box flex={1} minHeight={0} display="flex" flexDirection="column" color="white" p={4}>
+                                            <Box
+                                              width="100%"
+                                              flex={1}
+                                              minHeight={0}
+                                              maxHeight="calc(100vh - 48px)"
+                                              overflowY="auto"
+                                              pr={2}
+                                              css={sidebarStyles.chatHistoryPanel.messageList.css}
+                                            >
+                                              <Box fontWeight="bold" mb={2} fontSize="lg">语言帮助</Box>
+                                              {languageHelpList.length === 0 ? (
+                                                <Box color="gray.400">暂无语言帮助</Box>
+                                              ) : (
+                                                languageHelpList.map((languageHelp, idx) => (
+                                                  <Box key={idx} mb={4} pb={2} borderBottom="1px solid" borderColor="whiteAlpha.200">
+                                                    {typeof languageHelp === 'object' && Object.keys(languageHelp).length > 0 ? (
+                                                      <Box as="ul" pl={4}>
+                                                        {Object.entries(languageHelp).map(([k, v]) => (
+                                                          <li key={String(k)} style={{marginBottom: 8}}>{String(k)} <span style={{color:'#4fd1c5'}}>&rarr;</span> {String(v)}</li>
+                                                        ))}
+                                                      </Box>
+                                                    ) : (
+                                                      <Box>{String(languageHelp)}</Box>
+                                                    )}
+                                                  </Box>
+                                                ))
+                                              )}
+                                            </Box>
+                                          </Box>
+                                        )}
                                       </Box>
                                     </Flex>
                                   </>
